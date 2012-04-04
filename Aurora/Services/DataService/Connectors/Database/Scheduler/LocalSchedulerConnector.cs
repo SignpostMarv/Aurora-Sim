@@ -39,12 +39,21 @@ namespace Aurora.Services.DataService.Connectors.Database.Scheduler
     {
         private IGenericData m_Gd;
 
-        private readonly string[] theFields = new[]
-                                         {
-                                             "id", "fire_function", "fire_params", "run_once", "run_every",
-                                             "runs_next", "keep_history", "require_reciept", "last_history_id", 
-                                             "create_time", "start_time", "run_every_type", "enabled"
-                                         };
+        private readonly string[] theFields = new string[13]{
+            "id",
+            "fire_function",
+            "fire_params",
+            "run_once",
+            "run_every",
+            "runs_next",
+            "keep_history",
+            "require_reciept",
+            "last_history_id", 
+            "create_time",
+            "start_time",
+            "run_every_type",
+            "enabled"
+        };
 
         #region Implementation of IAuroraDataPlugin
 
