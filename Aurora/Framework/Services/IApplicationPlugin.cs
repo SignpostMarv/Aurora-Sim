@@ -121,11 +121,6 @@ namespace Aurora.Framework
         /// <summary>
         ///   select 'wantedValue' from 'table' 'whereClause'
         /// </summary>
-        List<string> QueryFullData(string whereClause, string table, string wantedValue);
-
-        /// <summary>
-        ///   select 'wantedValue' from 'table' 'whereClause'
-        /// </summary>
         IDataReader QueryData(string whereClause, string table, string wantedValue);
 
         /// <summary>

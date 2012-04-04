@@ -143,48 +143,6 @@ namespace Aurora.DataManager.MySQL
             }
         }
 
-        public override List<string> QueryFullData(string whereClause, string table, string wantedValue)
-        {
-            IDataReader reader = null;
-            List<string> retVal = new List<string>();
-            string query = String.Format("select {0} from {1} {2}",
-                                         wantedValue, table, whereClause);
-            try
-            {
-                using (reader = Query(query, new Dictionary<string, object>()))
-                {
-                    while (reader.Read())
-                    {
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            retVal.Add(reader.GetString(i));
-                        }
-                    }
-                    return retVal;
-                }
-            }
-            catch (Exception e)
-            {
-                MainConsole.Instance.Error("[MySQLDataLoader] QueryFullData(" + query + "), " + e);
-                return null;
-            }
-            finally
-            {
-                try
-                {
-                    if (reader != null)
-                    {
-                        reader.Close();
-                        //reader.Dispose ();
-                    }
-                }
-                catch (Exception e)
-                {
-                    MainConsole.Instance.Error("[MySQLDataLoader] Query(" + query + "), " + e);
-                }
-            }
-        }
-
         public override IDataReader QueryData(string whereClause, string table, string wantedValue)
         {
             string query = String.Format("select {0} from {1} {2}",

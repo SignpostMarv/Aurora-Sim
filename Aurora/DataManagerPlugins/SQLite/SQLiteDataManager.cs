@@ -245,29 +245,6 @@ namespace Aurora.DataManager.SQLite
                 cmd.Parameters.AddWithValue(p.Key, p.Value);
         }
 
-        public override List<string> QueryFullData(string whereClause, string table, string wantedValue)
-        {
-            string query = "";
-            query = String.Format("select {0} from {1} {2}",
-                                  wantedValue, table, whereClause);
-            var cmd = PrepReader(query);
-            using (IDataReader reader = cmd.ExecuteReader())
-            {
-                var RetVal = new List<string>();
-                while (reader.Read())
-                {
-                    for (int i = 0; i < reader.FieldCount; i++)
-                    {
-                        RetVal.Add(reader.GetValue(i).ToString());
-                    }
-                }
-                //reader.Close();
-                CloseReaderCommand(cmd);
-
-                return RetVal;
-            }
-        }
-
         public override IDataReader QueryData(string whereClause, string table, string wantedValue)
         {
             string query = "";
