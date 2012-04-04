@@ -81,38 +81,25 @@ namespace Aurora.Services.DataService
 
         public virtual List<InventoryItemBase> GetItems(string[] fields, string[] vals)
         {
-            string query = "";
+            QueryFilter filter = new QueryFilter();
+
             for (int i = 0; i < fields.Length; i++)
             {
-                query += String.Format("where {0} = '{1}' and ", fields[i], vals[i]);
+                filter.andFilters[fields[i]] = vals[i];
+//                query += String.Format("where {0} = '{1}' and ", fields[i], vals[i]);
                 i++;
             }
-            query = query.Remove(query.Length - 5);
-            using (IDataReader reader = GD.QueryData(query, m_itemsrealm, "*"))
+
+            try
             {
-                try
-                {
-                    return ParseInventoryItems(reader);
-                }
-                catch
-                {
-                }
-                finally
-                {
-                    try
-                    {
-                        //if (reader != null)
-                        //{
-                        //    reader.Close ();
-                        //    reader.Dispose ();
-                        //}
-                    }
-                    catch
-                    {
-                    }
-                    GD.CloseDatabase();
-                }
+                return ParseInventoryItems(GD.Query(new string[1] { "*" }, m_itemsrealm, filter, null, null, null));
             }
+            catch { }
+            finally
+            {
+                GD.CloseDatabase();
+            }
+
             return null;
         }
 
@@ -509,45 +496,12 @@ namespace Aurora.Services.DataService
 
         public virtual InventoryItemBase[] GetActiveGestures(UUID principalID)
         {
-            string query = String.Format("where {0} = '{1}' and {2} = '{3}'", "avatarID", principalID, "assetType",
-                                         (int) AssetType.Gesture);
+            QueryFilter filter = new QueryFilter();
+            filter.andFilters["avatarID"] = principalID;
+            filter.andFilters["assetType"] = (int)AssetType.Gesture;
+            filter.andBitfieldAndFilters["flags"] = 1;
 
-            using (IDataReader reader = GD.QueryData(query, m_itemsrealm, "*"))
-            {
-                List<InventoryItemBase> items = new List<InventoryItemBase>();
-                try
-                {
-                    items = ParseInventoryItems(reader);
-#if (!ISWIN)
-                    items.RemoveAll(delegate(InventoryItemBase item)
-                    {
-                        return (item.Flags & 1) != 1; //1 means that it is active, so remove all ones that do not have a 1
-                    });
-#else
-                    items.RemoveAll(
-                        item => (item.Flags & 1) != 1);
-#endif
-                }
-                catch
-                {
-                }
-                finally
-                {
-                    try
-                    {
-                        //if (reader != null)
-                        //{
-                        //    reader.Close ();
-                        //    reader.Dispose ();
-                        //}
-                    }
-                    catch
-                    {
-                    }
-                }
-                GD.CloseDatabase();
-                return items.ToArray();
-            }
+            return ParseInventoryItems(GD.Query(new string[1] { "*" }, m_itemsrealm, filter, null, null, null)).ToArray();
         }
 
         #endregion
@@ -639,42 +593,40 @@ namespace Aurora.Services.DataService
             return folders;
         }
 
-        private List<InventoryItemBase> ParseInventoryItems(IDataReader retVal)
+        private List<InventoryItemBase> ParseInventoryItems(List<string> retVal)
         {
             List<InventoryItemBase> items = new List<InventoryItemBase>();
-            while (retVal.Read())
+
+            if (retVal.Count % 20 == 0)
             {
-                InventoryItemBase item = new InventoryItemBase
-                                             {
-                                                 AssetID = UUID.Parse(retVal["assetID"].ToString()),
-                                                 AssetType = int.Parse(retVal["assetType"].ToString()),
-                                                 Name = retVal["inventoryName"].ToString(),
-                                                 Description = retVal["inventoryDescription"].ToString(),
-                                                 NextPermissions =
-                                                     uint.Parse(retVal["inventoryNextPermissions"].ToString()),
-                                                 CurrentPermissions =
-                                                     uint.Parse(retVal["inventoryCurrentPermissions"].ToString()),
-                                                 InvType = int.Parse(retVal["invType"].ToString()),
-                                                 CreatorIdentification = retVal["creatorID"].ToString(),
-                                                 BasePermissions =
-                                                     uint.Parse(retVal["inventoryBasePermissions"].ToString()),
-                                                 EveryOnePermissions =
-                                                     uint.Parse(retVal["inventoryEveryOnePermissions"].ToString()),
-                                                 SalePrice = int.Parse(retVal["salePrice"].ToString()),
-                                                 SaleType = byte.Parse(retVal["saleType"].ToString()),
-                                                 CreationDate = int.Parse(retVal["creationDate"].ToString()),
-                                                 GroupID = UUID.Parse(retVal["groupID"].ToString()),
-                                                 GroupOwned = int.Parse(retVal["groupOwned"].ToString()) == 1,
-                                                 Flags = uint.Parse(retVal["flags"].ToString()),
-                                                 ID = UUID.Parse(retVal["inventoryID"].ToString()),
-                                                 Owner = UUID.Parse(retVal["avatarID"].ToString()),
-                                                 Folder = UUID.Parse(retVal["parentFolderID"].ToString()),
-                                                 GroupPermissions =
-                                                     uint.Parse(retVal["inventoryGroupPermissions"].ToString())
-                                             };
-                items.Add(item);
+                for (int i = 0; i < retVal.Count; i += 20)
+                {
+                    items.Add(new InventoryItemBase
+                    {
+                        AssetID = UUID.Parse(retVal[i]),
+                        AssetType = int.Parse(retVal[i + 1]),
+                        Name = retVal[i + 2],
+                        Description = retVal[i + 3],
+                        NextPermissions = uint.Parse(retVal[i + 4]),
+                        CurrentPermissions = uint.Parse(retVal[i + 5]),
+                        InvType = int.Parse(retVal[i + 6]),
+                        CreatorIdentification = retVal[i + 7],
+                        BasePermissions = uint.Parse(retVal[i + 8]),
+                        EveryOnePermissions = uint.Parse(retVal[i + 9]),
+                        SalePrice = int.Parse(retVal[i + 10]),
+                        SaleType = byte.Parse(retVal[i + 11]),
+                        CreationDate = int.Parse(retVal[i + 12]),
+                        GroupID = UUID.Parse(retVal[i + 13]),
+                        GroupOwned = int.Parse(retVal[i + 14]) == 1,
+                        Flags = uint.Parse(retVal[i + 15]),
+                        ID = UUID.Parse(retVal[i + 16]),
+                        Owner = UUID.Parse(retVal[i + 17]),
+                        Folder = UUID.Parse(retVal[i + 18]),
+                        GroupPermissions = uint.Parse(retVal[i + 19])
+                    });
+                }
             }
-            //retVal.Close();
+
             return items;
         }
 
