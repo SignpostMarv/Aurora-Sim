@@ -85,52 +85,53 @@ namespace Aurora.DataManager.Migration.Migrators
 
         public override void FinishedMigration(IDataConnector genericData)
         {
-            if (!genericData.TableExists("estates")) return;
-            IDataReader dr = genericData.QueryData("WHERE `Key` = 'EstateID'", "estates", "`ID`, `Key`, `Value`");
-
-            if (dr != null)
+            if (!genericData.TableExists("estates"))
             {
-                try
+                return;
+            }
+
+            QueryFilter filter = new QueryFilter();
+            filter.andFilters["`Key`"] = "EstateID";
+
+            List<string> query = genericData.Query(new string[3]{
+                "`ID`",
+                "`Key`",
+                "`Value`"
+            }, "estates", filter, null, null, null);
+
+            if (query.Count > 0 && query.Count % 3 == 0)
+            {
+                for (int i = 0; i < query.Count; i += 3)
                 {
-                    while (dr.Read())
+                    try
                     {
-                        try
+                        UUID ID = UUID.Parse(query[i]);
+                        string value = query[i + 1];
+
+                        filter = new QueryFilter();
+                        filter.andFilters["`ID`"] = value;
+                        filter.andFilters["`Key`"] = "EstateSettings";
+
+                        List<string> results = genericData.Query(new string[1] { "`Value`" }, "estates", filter, null, null, null);
+                        if ((results != null) && (results.Count >= 1))
                         {
-                            UUID ID = UUID.Parse(dr["ID"].ToString());
-                            string value = dr["Value"].ToString();
-                            QueryFilter filter = new QueryFilter();
-                            filter.andFilters["`ID`"] = value;
-                            filter.andFilters["`Key`"] = "EstateSettings";
-                            List<string> results = genericData.Query(new string[1] { "`Value`" }, "estates", filter, null, null, null);
-                            if ((results != null) && (results.Count >= 1))
+                            EstateSettings es = new EstateSettings();
+                            es.FromOSD((OSDMap)OSDParser.DeserializeLLSDXml(results[0]));
+                            genericData.Insert("estateregions", new object[] { ID, value });
+
+                            filter = new QueryFilter();
+                            filter.andFilters["`EstateID`"] = value;
+
+                            List<string> exist = genericData.Query(new string[1] { "`EstateID`" }, "estatesettings", filter, null, null, null);
+                            if (exist == null || exist.Count == 0)
                             {
-                                EstateSettings es = new EstateSettings();
-                                es.FromOSD((OSDMap)OSDParser.DeserializeLLSDXml(results[0]));
-                                genericData.Insert("estateregions", new object[] { ID, value });
-
-                                filter = new QueryFilter();
-                                filter.andFilters["`EstateID`"] = value;
-
-                                List<string> exist = genericData.Query(new string[1] { "`EstateID`" }, "estatesettings", filter, null, null, null);
-                                if (exist == null || exist.Count == 0)
-                                {
-                                    genericData.Insert("estatesettings", new object[] { value, es.EstateName, es.EstateOwner, es.ParentEstateID, es.ToOSD() });
-                                }
+                                genericData.Insert("estatesettings", new object[] { value, es.EstateName, es.EstateOwner, es.ParentEstateID, es.ToOSD() });
                             }
                         }
-                        catch
-                        {
-
-                        }
                     }
-                }
-                catch
-                {
-
-                }
-                finally
-                {
-                    dr.Close();
+                    catch
+                    {
+                    }
                 }
             }
         }
