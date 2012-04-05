@@ -49,8 +49,7 @@ namespace Aurora.Services.DataService
 
         #region IInventoryData Members
 
-        public virtual void Initialize(IGenericData GenericData, IConfigSource source, IRegistryCore simBase,
-                                       string defaultConnectionString)
+        public virtual void Initialize(IGenericData GenericData, IConfigSource source, IRegistryCore simBase, string defaultConnectionString)
         {
             if (source.Configs["AuroraConnectors"].GetString("InventoryConnector", "LocalConnector") == "LocalConnector")
             {
@@ -325,42 +324,33 @@ namespace Aurora.Services.DataService
                         int.Parse(versionRetVal[1]) == (int) AssetType.LinkFolder)
                     {
                         //If it is the trash folder, we need to send its descendents, because the viewer wants it
-                        query = String.Format("where {0} = '{1}' and {2} = '{3}'", "parentFolderID", folder_id,
-                                              "agentID", AgentID);
-                        using (IDataReader retVal = GD.QueryData(query, m_foldersrealm, "*"))
+
+                        filter = new QueryFilter();
+                        filter.andFilters["parentFolderID"] = folder_id;
+                        filter.andFilters["agentID"] = AgentID;
+
+                        List<string> retVal = GD.Query(new string[1] { "*" }, m_foldersrealm, filter, null, null, null);
+
+                        if (retVal.Count % 6 == 0)
                         {
                             try
                             {
-                                while (retVal.Read())
+                                for (int i = 0; i < retVal.Count; i += 6)
                                 {
-                                    contents.WriteStartMap("folder"); //Start item kvp
-                                    contents["folder_id"] = UUID.Parse(retVal["folderID"].ToString());
-                                    contents["parent_id"] = UUID.Parse(retVal["parentFolderID"].ToString());
-                                    contents["name"] = retVal["folderName"].ToString();
-                                    int type = int.Parse(retVal["type"].ToString());
-                                    contents["type"] = type;
-                                    contents["preferred_type"] = type;
+                                    contents.WriteStartMap("folder");
+                                    contents["folder_id"] = UUID.Parse(retVal[i]);
+                                    contents["parent_id"] = UUID.Parse(retVal[i + 2]);
+                                    contents["name"] = query[i + 3];
+                                    contents["type"] = int.Parse(retVal[i + 4]);
+                                    contents["preferred_type"] = int.Parse(retVal[i + 4]);
 
                                     count++;
-                                    contents.WriteEndMap( /*"folder"*/); //end array items
+                                    contents.WriteEndMap();
                                 }
                             }
-                            catch
-                            {
-                            }
+                            catch { }
                             finally
                             {
-                                try
-                                {
-                                    //if (retVal != null)
-                                    //{
-                                    //    retVal.Close ();
-                                    //    retVal.Dispose ();
-                                    //}
-                                }
-                                catch
-                                {
-                                }
                                 GD.CloseDatabase();
                             }
                         }
