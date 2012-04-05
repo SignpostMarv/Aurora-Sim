@@ -104,37 +104,24 @@ namespace Aurora.Services.DataService
 
         public virtual OSDArray GetLLSDItems(string[] fields, string[] vals)
         {
-            string query = "";
+            QueryFilter filter = new QueryFilter();
+
+//            string query = "";
             for (int i = 0; i < fields.Length; i++)
             {
-                query += String.Format("where {0} = '{1}' and ", fields[i], vals[i]);
+                filter.andFilters[fields[i]] = vals[i];
+//                query += String.Format("where {0} = '{1}' and ", fields[i], vals[i]);
                 i++;
             }
-            query = query.Remove(query.Length - 5);
-            using (IDataReader reader = GD.QueryData(query, m_itemsrealm, "*"))
+//            query = query.Remove(query.Length - 5);
+            try
             {
-                try
-                {
-                    return ParseLLSDInventoryItems(reader);
-                }
-                catch
-                {
-                }
-                finally
-                {
-                    try
-                    {
-                        //if (reader != null)
-                        //{
-                        //    reader.Close ();
-                        //    reader.Dispose ();
-                        //}
-                    }
-                    catch
-                    {
-                    }
-                    GD.CloseDatabase();
-                }
+                return ParseLLSDInventoryItems(GD.Query(new string[1] { "*" }, m_itemsrealm, filter, null, null, null));
+            }
+            catch { }
+            finally
+            {
+                GD.CloseDatabase();
             }
             return null;
         }
@@ -498,6 +485,67 @@ namespace Aurora.Services.DataService
 
         public void Dispose()
         {
+        }
+
+        private OSDArray ParseLLSDInventoryItems(List<string> retVal)
+        {
+            OSDArray resp = new OSDArray();
+            OSDMap item;
+            OSDMap permissions;
+            OSDMap sale_info;
+            List<InventoryItemBase> items = ParseInventoryItems(retVal);
+
+            foreach (InventoryItemBase inventoryItem in items)
+            {
+                item = new OSDMap();
+                permissions = new OSDMap();
+                sale_info = new OSDMap();
+
+                permissions["next_owner_mask"] = inventoryItem.NextPermissions;
+                permissions["owner_mask"] = inventoryItem.CurrentPermissions;
+                permissions["creator_id"] = inventoryItem.CreatorIdAsUuid;
+                permissions["base_mask"] = inventoryItem.BasePermissions;
+                permissions["everyone_mask"] = inventoryItem.EveryOnePermissions;
+                permissions["group_id"] = inventoryItem.GroupID;
+                permissions["is_owner_group"] = inventoryItem.GroupOwned;
+                permissions["group_mask"] = inventoryItem.GroupPermissions;
+                permissions["owner_id"] = inventoryItem.Owner;
+                permissions["last_owner_id"] = inventoryItem.Owner;
+
+                sale_info["sale_priec"] = inventoryItem.SalePrice;
+                switch (inventoryItem.SaleType)
+                {
+                    default:
+                        sale_info["sale_type"] = "not";
+                        break;
+                    case 1:
+                        sale_info["sale_type"] = "original";
+                        break;
+                    case 2:
+                        sale_info["sale_type"] = "copy";
+                        break;
+                    case 3:
+                        sale_info["sale_type"] = "contents";
+                        break;
+                }
+
+                item["asset_id"] = inventoryItem.AssetID;
+                item["name"] = inventoryItem.Name;
+                item["desc"] = inventoryItem.Description;
+                item["created_at"] = inventoryItem.CreationDate;
+                item["flags"] = inventoryItem.Flags;
+                item["item_id"] = inventoryItem.ID;
+                item["parent_id"] = inventoryItem.Folder;
+                item["agent_id"] = inventoryItem.Owner;
+                item["type"] = Utils.AssetTypeToString((AssetType)inventoryItem.AssetType);
+                item["inv_type"] = Utils.InventoryTypeToString((InventoryType)inventoryItem.InvType);
+                item["sale_info"] = sale_info;
+                item["permissions"] = permissions;
+
+                resp.Add(item);
+            }
+
+            return resp;
         }
 
         private OSDArray ParseLLSDInventoryItems(IDataReader retVal)
