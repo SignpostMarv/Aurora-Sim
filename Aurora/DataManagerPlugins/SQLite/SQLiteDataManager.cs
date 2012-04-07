@@ -307,42 +307,6 @@ namespace Aurora.DataManager.SQLite
             }
         }
 
-        public override Dictionary<string, List<string>> QueryNames(string[] keyRow, object[] keyValue, string table, string wantedValue)
-        {
-            Dictionary<string, object> ps = new Dictionary<string, object>();
-            string query = String.Format("select {0} from {1} where ",
-                                         wantedValue, table);
-            int i = 0;
-            foreach (object value in keyValue)
-            {
-                ps[":" + keyRow[i].Replace("`", "")] = value;
-                query += String.Format("{0} = :{1} and ", keyRow[i], keyRow[i].Replace("`", ""));
-                i++;
-            }
-            query = query.Remove(query.Length - 5);
-            var cmd = PrepReader(query);
-            AddParams(ref cmd, ps);
-            using (IDataReader reader = cmd.ExecuteReader())
-            {
-                var RetVal = new Dictionary<string, List<string>>();
-                while (reader.Read())
-                {
-                    for (i = 0; i < reader.FieldCount; i++)
-                    {
-                        Type r = reader[i].GetType();
-                        if (r == typeof (DBNull))
-                            AddValueToList(ref RetVal, reader.GetName(i), null);
-                        else
-                            AddValueToList(ref RetVal, reader.GetName(i), reader[i].ToString());
-                    }
-                }
-                //reader.Close();
-                CloseReaderCommand(cmd);
-
-                return RetVal;
-            }
-        }
-
         private void AddValueToList(ref Dictionary<string, List<string>> dic, string key, string value)
         {
             if (!dic.ContainsKey(key))

@@ -181,71 +181,72 @@ namespace Aurora.Services.DataService
         {
             RegionSettings settings = new RegionSettings ();
 
-            Dictionary<string, List<string>> query = GD.QueryNames (new[] { "regionUUID" }, new object[] { regionUUID }, m_regionSettingsRealm, "*");
-            if (query.Count == 0)
+            QueryFilter filter = new QueryFilter();
+            filter.andFilters["regionUUID"] = regionUUID;
+
+            List<string> query = GD.Query(new string[1] { "*" }, m_regionSettingsRealm, filter, null, null, null);
+
+            if (query.Count % 45 != 0)
             {
                 settings.RegionUUID = regionUUID;
                 StoreRegionSettings (settings);
             }
             else
             {
-                for (int i = 0; i < query.ElementAt (0).Value.Count; i++)
+                for (int i = 0; i < query.Count; i += 45)
                 {
-                    settings.RegionUUID = UUID.Parse (query["regionUUID"][i]);
-                    settings.BlockTerraform = int.Parse (query["block_terraform"][i]) == 1;
-                    settings.BlockFly = int.Parse (query["block_fly"][i]) == 1;
-                    settings.AllowDamage = int.Parse (query["allow_damage"][i]) == 1;
-                    settings.RestrictPushing = int.Parse (query["restrict_pushing"][i]) == 1;
-                    settings.AllowLandResell = int.Parse (query["allow_land_resell"][i]) == 1;
-                    settings.AllowLandJoinDivide = int.Parse (query["allow_land_join_divide"][i]) == 1;
-                    settings.BlockShowInSearch = int.Parse (query["block_show_in_search"][i]) == 1;
-                    settings.AgentLimit = int.Parse (query["agent_limit"][i]);
-                    settings.ObjectBonus = double.Parse (query["object_bonus"][i]);
-                    settings.Maturity = int.Parse (query["maturity"][i]);
-                    settings.DisableScripts = int.Parse (query["disable_scripts"][i]) == 1;
-                    settings.DisableCollisions = int.Parse (query["disable_collisions"][i]) == 1;
-                    settings.DisablePhysics = int.Parse (query["disable_physics"][i]) == 1;
-                    settings.TerrainTexture1 = UUID.Parse (query["terrain_texture_1"][i]);
-                    settings.TerrainTexture2 = UUID.Parse (query["terrain_texture_2"][i]);
-                    settings.TerrainTexture3 = UUID.Parse (query["terrain_texture_3"][i]);
-                    settings.TerrainTexture4 = UUID.Parse (query["terrain_texture_4"][i]);
-                    settings.Elevation1NW = double.Parse (query["elevation_1_nw"][i]);
-                    settings.Elevation2NW = double.Parse (query["elevation_2_nw"][i]);
-                    settings.Elevation1NE = double.Parse (query["elevation_1_ne"][i]);
-                    settings.Elevation2NE = double.Parse (query["elevation_2_ne"][i]);
-                    settings.Elevation1SE = double.Parse (query["elevation_1_se"][i]);
-                    settings.Elevation2SE = double.Parse (query["elevation_2_se"][i]);
-                    settings.Elevation1SW = double.Parse (query["elevation_1_sw"][i]);
-                    settings.Elevation2SW = double.Parse (query["elevation_2_sw"][i]);
-                    settings.WaterHeight = double.Parse (query["water_height"][i]);
-                    settings.TerrainRaiseLimit = double.Parse (query["terrain_raise_limit"][i]);
-                    settings.TerrainLowerLimit = double.Parse (query["terrain_lower_limit"][i]);
-                    settings.UseEstateSun = int.Parse (query["use_estate_sun"][i]) == 1;
-                    settings.FixedSun = int.Parse (query["fixed_sun"][i]) == 1;
-                    settings.SunPosition = double.Parse (query["sun_position"][i]);
-                    settings.Covenant = UUID.Parse (query["covenant"][i]);
-                    if(query.ContainsKey("Sandbox"))
-                        if(query["Sandbox"][i] != null)
-                            settings.Sandbox = int.Parse (query["Sandbox"][i]) == 1;
-                    settings.SunVector = new Vector3 (float.Parse (query["sunvectorx"][i]),
-                        float.Parse (query["sunvectory"][i]),
-                        float.Parse (query["sunvectorz"][i]));
-                    settings.LoadedCreationID = query["loaded_creation_id"][i];
-                    settings.LoadedCreationDateTime = int.Parse (query["loaded_creation_datetime"][i]);
-                    settings.TerrainMapImageID = UUID.Parse (query["map_tile_ID"][i]);
-                    settings.TerrainImageID = UUID.Parse (query["terrain_tile_ID"][i]);
-                    if (query["minimum_age"][i] != null)
-                        settings.MinimumAge = int.Parse (query["minimum_age"][i]);
-                    if(query["covenantlastupdated"][i] != null)
-                        settings.CovenantLastUpdated = int.Parse (query["covenantlastupdated"][i]);
-                    if (query.ContainsKey ("generic") && query["generic"].Count > i && query["generic"][i] != null)
+                    settings.RegionUUID = UUID.Parse (query[i]);
+                    settings.BlockTerraform = int.Parse (query[i + 1]) == 1;
+                    settings.BlockFly = int.Parse (query[i + 2]) == 1;
+                    settings.AllowDamage = int.Parse (query[i + 3]) == 1;
+                    settings.RestrictPushing = int.Parse (query[i + 4]) == 1;
+                    settings.AllowLandResell = int.Parse (query[i + 5]) == 1;
+                    settings.AllowLandJoinDivide = int.Parse (query[i + 6]) == 1;
+                    settings.BlockShowInSearch = int.Parse (query[i + 7]) == 1;
+                    settings.AgentLimit = int.Parse (query[i + 8]);
+                    settings.ObjectBonus = double.Parse (query[i + 9]);
+                    settings.Maturity = int.Parse (query[i + 10]);
+                    settings.DisableScripts = int.Parse (query[i + 11]) == 1;
+                    settings.DisableCollisions = int.Parse (query[i + 12]) == 1;
+                    settings.DisablePhysics = int.Parse (query[i + 13]) == 1;
+                    settings.TerrainTexture1 = UUID.Parse (query[i + 14]);
+                    settings.TerrainTexture2 = UUID.Parse (query[i + 15]);
+                    settings.TerrainTexture3 = UUID.Parse (query[i + 16]);
+                    settings.TerrainTexture4 = UUID.Parse (query[i + 17]);
+                    settings.Elevation1NW = double.Parse (query[i + 18]);
+                    settings.Elevation2NW = double.Parse (query[i + 19]);
+                    settings.Elevation1NE = double.Parse (query[i + 20]);
+                    settings.Elevation2NE = double.Parse (query[i + 21]);
+                    settings.Elevation1SE = double.Parse (query[i + 22]);
+                    settings.Elevation2SE = double.Parse (query[i + 23]);
+                    settings.Elevation1SW = double.Parse (query[i + 24]);
+                    settings.Elevation2SW = double.Parse (query[i + 25]);
+                    settings.WaterHeight = double.Parse (query[i + 26]);
+                    settings.TerrainRaiseLimit = double.Parse (query[i + 27]);
+                    settings.TerrainLowerLimit = double.Parse (query[i + 28]);
+                    settings.UseEstateSun = int.Parse (query[i + 29]) == 1;
+                    settings.FixedSun = int.Parse (query[i + 30]) == 1;
+                    settings.SunPosition = double.Parse (query[i + 31]);
+                    settings.Covenant = UUID.Parse (query[i + 32]);
+                    settings.Sandbox = int.Parse(query[i + 33]) == 1;
+                    settings.SunVector = new Vector3 (
+                        float.Parse (query[i + 34]),
+                        float.Parse (query[i + 35]),
+                        float.Parse (query[i + 36])
+                    );
+                    settings.LoadedCreationID = query[i + 37];
+                    settings.LoadedCreationDateTime = int.Parse (query[i + 38]);
+                    settings.TerrainMapImageID = UUID.Parse (query[i + 39]);
+                    settings.TerrainImageID = UUID.Parse (query[i + 40]);
+                    settings.MinimumAge = int.Parse(query[i + 41]);
+                    settings.CovenantLastUpdated = int.Parse(query[i + 42]);
+                    OSD o = OSDParser.DeserializeJson(query[i + 43]);
+                    if (o.Type == OSDType.Map)
                     {
-                        OSD o = OSDParser.DeserializeJson (query["generic"][i]);
-                        if (o.Type == OSDType.Map)
-                            settings.Generic = (OSDMap)o;
+                        settings.Generic = (OSDMap)o;
                     }
-                    if (query["terrainmaplastregenerated"][i] != null)
-                        settings.TerrainMapLastRegenerated = Util.ToDateTime(int.Parse(query["terrainmaplastregenerated"][i]));
+
+                    settings.TerrainMapLastRegenerated = Util.ToDateTime(int.Parse(query[i + 44]));
                 }
             }
             settings.OnSave += StoreRegionSettings;

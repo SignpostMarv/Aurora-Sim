@@ -123,12 +123,6 @@ namespace Aurora.Framework
         /// </summary>
         IDataReader QueryData(string whereClause, string table, string wantedValue);
 
-        /// <summary>
-        ///   select 'wantedValue' from 'table' where 'keyRow' = 'keyValue'
-        ///   This gives the row names as well as the values
-        /// </summary>
-        Dictionary<string, List<string>> QueryNames(string[] keyRow, object[] keyValue, string table, string wantedValue);
-
         #endregion
 
         #region INSERT

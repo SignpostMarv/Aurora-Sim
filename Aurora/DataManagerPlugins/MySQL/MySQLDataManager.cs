@@ -219,64 +219,6 @@ namespace Aurora.DataManager.MySQL
             }
         }
 
-        /*public override Dictionary<string, List<string>> QueryNames(string[] wantedValue, string table, QueryFilter queryFilter, Dictionary<string, bool> sort, uint? start, uint? count)
-        {
-        }*/
-
-        public override Dictionary<string, List<string>> QueryNames(string[] keyRow, object[] keyValue, string table, string wantedValue)
-        {
-            IDataReader reader = null;
-            Dictionary<string, List<string>> retVal = new Dictionary<string, List<string>>();
-            Dictionary<string, object> ps = new Dictionary<string, object>();
-            string query = String.Format("select {0} from {1} where ",
-                                         wantedValue, table);
-            int i = 0;
-            foreach (object value in keyValue)
-            {
-                query += String.Format("{0} = ?{1} and ", keyRow[i], keyRow[i]);
-                ps["?" + keyRow[i]] = value;
-                i++;
-            }
-            query = query.Remove(query.Length - 5);
-
-            try
-            {
-                using (reader = Query(query, ps))
-                {
-                    while (reader.Read())
-                    {
-                        for (i = 0; i < reader.FieldCount; i++)
-                        {
-                            Type r = reader[i].GetType();
-                            AddValueToList(ref retVal, reader.GetName(i),
-                                           r == typeof (DBNull) ? null : reader[i].ToString());
-                        }
-                    }
-                    return retVal;
-                }
-            }
-            catch (Exception e)
-            {
-                MainConsole.Instance.Error("[MySQLDataLoader] QueryNames(" + query + "), " + e);
-                return null;
-            }
-            finally
-            {
-                try
-                {
-                    if (reader != null)
-                    {
-                        reader.Close();
-                        //reader.Dispose ();
-                    }
-                }
-                catch (Exception e)
-                {
-                    MainConsole.Instance.Error("[MySQLDataLoader] QueryNames(" + query + "), " + e);
-                }
-            }
-        }
-
         private void AddValueToList(ref Dictionary<string, List<string>> dic, string key, string value)
         {
             if (!dic.ContainsKey(key))

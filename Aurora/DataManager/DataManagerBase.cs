@@ -297,8 +297,6 @@ namespace Aurora.DataManager
 
         public abstract IDataReader QueryData(string whereClause, string table, string wantedValue);
 
-        public abstract Dictionary<string, List<string>> QueryNames(string[] keyRow, object[] keyValue, string table, string wantedValue);
-
         #endregion
 
         #region INSERT
