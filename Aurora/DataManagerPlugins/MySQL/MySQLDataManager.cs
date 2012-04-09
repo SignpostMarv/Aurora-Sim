@@ -443,7 +443,7 @@ namespace Aurora.DataManager.MySQL
         public override bool Delete(string table, QueryFilter queryFilter)
         {
             Dictionary<string, object> ps = new Dictionary<string,object>();
-            string query = "DELETE FROM " + table + (queryFilter != null ? (" WHERE " + queryFilter.ToSQL('?', out ps)) : "");
+            string query = "DELETE FROM " + table + (queryFilter != null && queryFilter.Count >= 1 ? (" WHERE " + queryFilter.ToSQL('?', out ps)) : "");
 
             try
             {
