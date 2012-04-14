@@ -107,14 +107,11 @@ namespace Aurora.DataManager.Migration
                 if (startMigrator != null)
                 {
                     Migrator targetMigrator = GetLatestVersionMigrator();
-                    operationDescription = new MigrationOperationDescription(MigrationOperationTypes.UpgradeToTarget,
-                                                                             currentVersion, startMigrator.Version,
-                                                                             targetMigrator.Version);
+                    operationDescription = new MigrationOperationDescription(MigrationOperationTypes.UpgradeToTarget, currentVersion, startMigrator.Version, targetMigrator.Version);
                 }
                 else
                 {
-                    operationDescription = new MigrationOperationDescription(MigrationOperationTypes.DoNothing,
-                                                                             currentVersion);
+                    operationDescription = new MigrationOperationDescription(MigrationOperationTypes.DoNothing, currentVersion);
                 }
             }
         }
@@ -155,8 +152,7 @@ namespace Aurora.DataManager.Migration
             if (migratorName == "")
                 return;
 
-            if (operationDescription != null && executed == false &&
-                operationDescription.OperationType != MigrationOperationTypes.DoNothing)
+            if (operationDescription != null && executed == false && operationDescription.OperationType != MigrationOperationTypes.DoNothing)
             {
                 Migrator currentMigrator = GetMigratorByVersion(operationDescription.CurrentVersion);
 
@@ -180,8 +176,7 @@ namespace Aurora.DataManager.Migration
                 {
                     //Try rerunning the migrator and then the validation
                     //prepare restore point if something goes wrong
-                    MainConsole.Instance.Fatal(string.Format("Failed to validate migration {0}-{1}, retrying...",
-                                              currentMigrator.MigrationName, currentMigrator.Version));
+                    MainConsole.Instance.Fatal(string.Format("Failed to validate migration {0}-{1}, retrying...", currentMigrator.MigrationName, currentMigrator.Version));
 
                     currentMigrator.Migrate(genericData);
                     validated = currentMigrator.Validate(genericData);
@@ -237,8 +232,7 @@ namespace Aurora.DataManager.Migration
                     catch (Exception ex)
                     {
                         if (currentMigrator != null)
-                            throw new MigrationOperationException(string.Format("Migrating to version {0} failed, {1}.",
-                                                                                currentMigrator.Version, ex));
+                            throw new MigrationOperationException(string.Format("Migrating to version {0} failed, {1}.", currentMigrator.Version, ex));
                     }
                     executed = true;
                     validated = executingMigrator.Validate(genericData);
@@ -248,9 +242,9 @@ namespace Aurora.DataManager.Migration
                     {
                         RollBackOperation();
                         if (currentMigrator != null)
-                            throw new MigrationOperationException(
-                                string.Format("Migrating to version {0} did not validate. Restoring to restore point.",
-                                              currentMigrator.Version));
+                        {
+                            throw new MigrationOperationException(string.Format("Migrating to version {0} did not validate. Restoring to restore point.", currentMigrator.Version));
+                        }
                     }
                     else
                     {
