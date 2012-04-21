@@ -30,10 +30,14 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
+
+using MySql.Data.MySqlClient;
+
+using OpenMetaverse;
+
 using Aurora.DataManager.Migration;
 using Aurora.Framework;
-using MySql.Data.MySqlClient;
-using OpenMetaverse;
 
 namespace Aurora.DataManager.MySQL
 {
@@ -89,7 +93,7 @@ namespace Aurora.DataManager.MySQL
 
         #endregion
 
-        #region Query
+        #region SELECT
 
         public IDataReader Query(string sql, Dictionary<string, object> parameters)
         {
@@ -226,14 +230,19 @@ namespace Aurora.DataManager.MySQL
 
         private List<string> Query2(string sqll, QueryFilter queryFilter, Dictionary<string, bool> sort, uint? start, uint? count)
         {
-            string query = sqll;
+            return doQueryWithTableAlias(sqll, queryFilter, new Dictionary<string, string>(0), sort, start, count);
+        }
+
+        private List<string> doQueryWithTableAlias(string sql, QueryFilter queryFilter, Dictionary<string, string> tableAlias, Dictionary<string, bool> sort, uint? start, uint? count)
+        {
+            string query = sql;
             Dictionary<string, object> ps = new Dictionary<string,object>();
             List<string> retVal = new List<string>();
             List<string> parts = new List<string>();
 
             if (queryFilter != null && queryFilter.Count > 0)
             {
-                query += " WHERE " + queryFilter.ToSQL('?', out ps);
+                query += " WHERE " + replaceTableAliases(queryFilter.ToSQL('?', out ps), tableAlias);
             }
 
             if (sort != null && sort.Count > 0)
@@ -243,7 +252,7 @@ namespace Aurora.DataManager.MySQL
                 {
                     parts.Add(string.Format("`{0}` {1}", sortOrder.Key, sortOrder.Value ? "ASC" : "DESC"));
                 }
-                query += " ORDER BY " + string.Join(", ", parts.ToArray());
+                query += " ORDER BY " + replaceTableAliases(string.Join(", ", parts.ToArray()), tableAlias);
             }
 
             if(start.HasValue){
@@ -370,6 +379,84 @@ namespace Aurora.DataManager.MySQL
 
             dic[key].Add(value);
         }
+
+        #region JOIN
+
+        private string replaceTableAliases(string subject, Dictionary<string, string> tableAlias)
+        {
+            if (tableAlias.Count > 0)
+            {
+                return Regex.Replace(subject, "([A-z0-9_]+\\|[0-9]+|[A-z0-9_]+)\\.([A-z][A-z0-9_]+)", delegate(Match match)
+                {
+                    if (tableAlias.ContainsKey(match.Groups[1].ToString()))
+                    {
+                        return tableAlias[match.Groups[1].ToString()] + "." + match.Groups[2].ToString();
+                    }
+                    else
+                    {
+                        return match.Groups[0].ToString();
+                    }
+                });
+            }
+            return subject;
+        }
+
+        public override List<string> InnerJoin(string[] wantedValue, Dictionary<string[], string[][]> tables, QueryFilter queryFilter, Dictionary<string, bool> sort, uint? start, uint? count)
+        {
+            Dictionary<string, string> tableAlias = new Dictionary<string, string>();
+
+            int i = 0;
+            int j = 0;
+            Dictionary<string, bool> aliased = new Dictionary<string, bool>();
+            foreach (KeyValuePair<string[], string[][]> tablejoin in tables)
+            {
+                foreach (string tableToAlias in tablejoin.Key)
+                {
+                    aliased[tableToAlias] = false;
+                    if (!tableAlias.ContainsKey(tableToAlias))
+                    {
+                        tableAlias[tableToAlias] = "ta" + (++i).ToString();
+                    }
+                    else
+                    {
+                        tableAlias[tableToAlias + "|" + (++j).ToString()] = "ta" + (++i).ToString();
+                    }
+                }
+                break;
+            }
+
+            for (i = 0; i < wantedValue.Length; ++i)
+            {
+                wantedValue[i] = replaceTableAliases(wantedValue[i], tableAlias);
+            }
+
+            i = 0;
+            j = 0;
+            int k=0;
+
+            List<string> tableQuery = new List<string>();
+            foreach (KeyValuePair<string[], string[][]> tablejoin in tables)
+            {
+                tableQuery.Add(tablejoin.Key[0] + " AS " + tableAlias[tablejoin.Key[0]]);
+                aliased[tablejoin.Key[0]] = true;
+                for (i = 1; i < tablejoin.Key.Length; ++i)
+                {
+                    List<string> on = new List<string>();
+                    for (k = 0; k < tablejoin.Value[i - 1].Length; k += 2)
+                    {
+                        on.Add(tablejoin.Value[i - 1][k] + " = " + tablejoin.Value[i - 1][k + 1]);
+                    }
+                    tableQuery.Add(tablejoin.Key[i] + " AS " + tableAlias[tablejoin.Key[i] + (aliased[tablejoin.Key[i]] ? "|" + (++j).ToString() : "")] + " ON " + replaceTableAliases(string.Join(" AND\n\t", on.ToArray()), tableAlias));
+                }
+                break;
+            }
+
+            string query = string.Format("SELECT\n {0} FROM {1}", string.Join(",\n\t", wantedValue), string.Join(" INNER JOIN \n", tableQuery.ToArray()));
+
+            return doQueryWithTableAlias(query, queryFilter, tableAlias, sort, start, count);
+        }
+
+        #endregion
 
         #endregion
 

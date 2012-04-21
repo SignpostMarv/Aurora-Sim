@@ -309,6 +309,12 @@ namespace Aurora.DataManager
 
         public abstract List<string> QueryFullData(string whereClause, QueryTables tables, string wantedValue);
 
+        #region JOIN
+
+        public abstract List<string> InnerJoin(string[] wantedValue, Dictionary<string[], string[][]> tables, QueryFilter queryFilter, Dictionary<string, bool> sort, uint? start, uint? count);
+
+        #endregion
+
         #endregion
 
         #region INSERT

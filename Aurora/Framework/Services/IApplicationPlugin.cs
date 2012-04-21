@@ -141,6 +141,18 @@ namespace Aurora.Framework
         IDataReader QueryData(string whereClause, QueryTables tables, string wantedValue);
         List<string> QueryFullData(string whereClause, QueryTables tables, string wantedValue);
 
+        /// <summary>
+        /// Selects wantedValue from tables, filtering by queryFilter, ordering results by sort, limiting by start and count if specified
+        /// </summary>
+        /// <param name="wantedValue">array of fields. ambiguous fields should specify table source in "table.field" form</param>
+        /// <param name="tables">array of tables and fields to perform the join on</param>
+        /// <param name="queryFilter"></param>
+        /// <param name="sort"></param>
+        /// <param name="start"></param>
+        /// <param name="count"></param>
+        /// <returns></returns>
+        List<string> InnerJoin(string[] wantedValue, Dictionary<string[], string[][]> tables, QueryFilter queryFilter, Dictionary<string, bool> sort, uint? start, uint? count);
+
         #endregion
 
         #endregion

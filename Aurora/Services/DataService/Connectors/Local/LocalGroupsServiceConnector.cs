@@ -990,6 +990,36 @@ namespace Aurora.Services.DataService
             if (remoteValue != null || m_doRemoteOnly)
                 return (List<GroupMembershipData>)remoteValue;
 
+            Dictionary<string[], string[][]> tables = new Dictionary<string[], string[][]>();
+            tables[new string[] { "osgroupmembership", "osgroup", "osrole" }] = new string[][]{
+                new string[]{"osgroup.GroupID", "osgroupmembership.GroupID"},
+                new string[]{"osrole.RoleID", "osgroupmembership.SelectedRoleID"}
+            };
+
+            QueryFilter filter = new QueryFilter();
+            filter.andFilters["osgroupmembership.AgentID"] = AgentID;
+
+            string[] fields = new string[16]{
+                "osgroupmembership.AcceptNotices",
+                "osgroupmembership.Contribution",
+                "osgroupmembership.ListInProfile",
+                "osgroupmembership.SelectedRoleID",
+                "osrole.Title",
+                "osrole.Powers",
+                "osgroup.AllowPublish",
+                "osgroup.Charter",
+                "osgroup.FounderID",
+                "osgroup.Name",
+                "osgroup.InsigniaID",
+                "osgroup.MaturePublish",
+                "osgroup.MembershipFee",
+                "osgroup.OpenEnrollment",
+                "osgroup.ShowInList",
+                "osgroup.GroupID"
+            };
+
+            List<string> Membership = data.InnerJoin(fields, tables, filter, null, null, null);
+            /*
             QueryTables tables = new QueryTables();
             tables.AddTable("osgroup", "osg");
             tables.AddTable("osgroupmembership", "osgm", JoinType.Inner, new[,] { { "osg.GroupID", "osgm.GroupID" } });
@@ -1017,7 +1047,7 @@ namespace Aurora.Services.DataService
                     "osg.ShowInList",
                     "osg.GroupID"
                 };
-            List<string> Membership = data.Query(fields, tables, filter, null, null, null);
+            List<string> Membership = data.Query(fields, tables, filter, null, null, null);*/
             List<GroupMembershipData> results = new List<GroupMembershipData>();
             for (int loop = 0; loop < Membership.Count; loop += fields.Length)
             {

@@ -95,7 +95,7 @@ namespace Aurora.DataManager.SQLite
 
         #endregion
 
-        #region Query
+        #region SELECT
 
         protected IDataReader ExecuteReader(SQLiteCommand cmd)
         {
@@ -414,6 +414,26 @@ namespace Aurora.DataManager.SQLite
 
             dic[key].Add(value);
         }
+
+        #region JOIN
+
+        /// <summary>
+        /// this is just a placeholder so it'll compile
+        /// </summary>
+        /// <param name="wantedValue"></param>
+        /// <param name="tables"></param>
+        /// <param name="on"></param>
+        /// <param name="queryFilter"></param>
+        /// <param name="sort"></param>
+        /// <param name="start"></param>
+        /// <param name="count"></param>
+        /// <returns></returns>
+        public override List<string> InnerJoin(string[] wantedValue, Dictionary<string[], string[][]> tables, QueryFilter queryFilter, Dictionary<string, bool> sort, uint? start, uint? count)
+        {
+            return new List<string>(0);
+        }
+
+        #endregion
 
         #endregion
 
