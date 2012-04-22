@@ -311,7 +311,7 @@ namespace Aurora.DataManager
 
         #region JOIN
 
-        public abstract List<string> InnerJoin(string[] wantedValue, Dictionary<string[], string[][]> tables, QueryFilter queryFilter, Dictionary<string, bool> sort, uint? start, uint? count);
+        public abstract List<string> Select(string[] wantedValue, string table, List<KeyValuePair<KeyValuePair<string, JoinType>, List<KeyValuePair<string, string>>>> join, QueryFilter queryFilter, Dictionary<string, bool> sort, uint? start, uint? count);
 
         #endregion
 

@@ -401,57 +401,45 @@ namespace Aurora.DataManager.MySQL
             return subject;
         }
 
-        public override List<string> InnerJoin(string[] wantedValue, Dictionary<string[], string[][]> tables, QueryFilter queryFilter, Dictionary<string, bool> sort, uint? start, uint? count)
+        public override List<string> Select(string[] wantedValue, string table, List<KeyValuePair<KeyValuePair<string, JoinType>, List<KeyValuePair<string, string>>>> join, QueryFilter queryFilter, Dictionary<string, bool> sort, uint? start, uint? count)
         {
             Dictionary<string, string> tableAlias = new Dictionary<string, string>();
 
             int i = 0;
             int j = 0;
             Dictionary<string, bool> aliased = new Dictionary<string, bool>();
-            foreach (KeyValuePair<string[], string[][]> tablejoin in tables)
+            foreach (KeyValuePair<KeyValuePair<string, JoinType>, List<KeyValuePair<string, string>>> joinOperation in join)
             {
-                foreach (string tableToAlias in tablejoin.Key)
+                string tableToAlias = joinOperation.Key.Key;
+                aliased[tableToAlias] = false;
+                if (!tableAlias.ContainsKey(tableToAlias))
                 {
-                    aliased[tableToAlias] = false;
-                    if (!tableAlias.ContainsKey(tableToAlias))
-                    {
-                        tableAlias[tableToAlias] = "ta" + (++i).ToString();
-                    }
-                    else
-                    {
-                        tableAlias[tableToAlias + "|" + (++j).ToString()] = "ta" + (++i).ToString();
-                    }
+                    tableAlias[tableToAlias] = "ta" + (++i).ToString();
                 }
-                break;
-            }
-
-            for (i = 0; i < wantedValue.Length; ++i)
-            {
-                wantedValue[i] = replaceTableAliases(wantedValue[i], tableAlias);
+                else
+                {
+                    tableAlias[tableToAlias + "|" + (++j).ToString()] = "ta" + (++i).ToString();
+                }
             }
 
             i = 0;
             j = 0;
-            int k=0;
 
             List<string> tableQuery = new List<string>();
-            foreach (KeyValuePair<string[], string[][]> tablejoin in tables)
+            foreach (KeyValuePair<KeyValuePair<string, JoinType>, List<KeyValuePair<string, string>>> joinOperation in join)
             {
-                tableQuery.Add(tablejoin.Key[0] + " AS " + tableAlias[tablejoin.Key[0]]);
-                aliased[tablejoin.Key[0]] = true;
-                for (i = 1; i < tablejoin.Key.Length; ++i)
+                string tableToAlias = joinOperation.Key.Key;
+                JoinType joinType = joinOperation.Key.Value;
+                List<string> onQuery = new List<string>(joinOperation.Value.Count);
+                foreach (KeyValuePair<string, string> onColumns in joinOperation.Value)
                 {
-                    List<string> on = new List<string>();
-                    for (k = 0; k < tablejoin.Value[i - 1].Length; k += 2)
-                    {
-                        on.Add(tablejoin.Value[i - 1][k] + " = " + tablejoin.Value[i - 1][k + 1]);
-                    }
-                    tableQuery.Add(tablejoin.Key[i] + " AS " + tableAlias[tablejoin.Key[i] + (aliased[tablejoin.Key[i]] ? "|" + (++j).ToString() : "")] + " ON " + replaceTableAliases(string.Join(" AND\n\t", on.ToArray()), tableAlias));
+                    onQuery.Add(onColumns.Key + " = " + onColumns.Value);
                 }
-                break;
+                tableQuery.Add(joinType.ToString() + " JOIN\n" + tableToAlias + " AS " + tableAlias[tableToAlias + (aliased[tableToAlias] ? "|" + (++j).ToString() : "")] + " ON " + replaceTableAliases(string.Join(" AND\n\t", onQuery.ToArray()), tableAlias));
+                aliased[tableToAlias] = true;
             }
 
-            string query = string.Format("SELECT\n {0} FROM {1}", string.Join(",\n\t", wantedValue), string.Join(" INNER JOIN \n", tableQuery.ToArray()));
+            string query = string.Format("SELECT\n {0} FROM {1}", replaceTableAliases(string.Join(",\n\t", wantedValue), tableAlias), table + " " + string.Join(" ", tableQuery.ToArray()));
 
             return doQueryWithTableAlias(query, queryFilter, tableAlias, sort, start, count);
         }

@@ -151,7 +151,7 @@ namespace Aurora.Framework
         /// <param name="start"></param>
         /// <param name="count"></param>
         /// <returns></returns>
-        List<string> InnerJoin(string[] wantedValue, Dictionary<string[], string[][]> tables, QueryFilter queryFilter, Dictionary<string, bool> sort, uint? start, uint? count);
+        List<string> Select(string[] wantedValue,string table, List<KeyValuePair<KeyValuePair<string, JoinType>, List<KeyValuePair<string, string>>>> join, QueryFilter queryFilter, Dictionary<string, bool> sort, uint? start, uint? count);
 
         #endregion
 

@@ -990,10 +990,20 @@ namespace Aurora.Services.DataService
             if (remoteValue != null || m_doRemoteOnly)
                 return (List<GroupMembershipData>)remoteValue;
 
-            Dictionary<string[], string[][]> tables = new Dictionary<string[], string[][]>();
-            tables[new string[] { "osgroupmembership", "osgroup", "osrole" }] = new string[][]{
-                new string[]{"osgroup.GroupID", "osgroupmembership.GroupID"},
-                new string[]{"osrole.RoleID", "osgroupmembership.SelectedRoleID"}
+            List<KeyValuePair<KeyValuePair<string, JoinType>, List<KeyValuePair<string, string>>>> join = new List<KeyValuePair<KeyValuePair<string, JoinType>, List<KeyValuePair<string, string>>>>
+            {
+                new KeyValuePair<KeyValuePair<string, JoinType>, List<KeyValuePair<string, string>>>(
+                    new KeyValuePair<string, JoinType>("osgroup", JoinType.Inner),
+                    new List<KeyValuePair<string, string>>{
+                        new KeyValuePair<string, string>("osgroup.GroupID", "osgroupmembership.GroupID")
+                    }
+                ),
+                new KeyValuePair<KeyValuePair<string, JoinType>, List<KeyValuePair<string, string>>>(
+                    new KeyValuePair<string, JoinType>("osrole", JoinType.Left),
+                    new List<KeyValuePair<string, string>>{
+                        new KeyValuePair<string, string>("osrole.RoleID", "osgroupmembership.SelectedRoleID")
+                    }
+                )
             };
 
             QueryFilter filter = new QueryFilter();
@@ -1018,7 +1028,7 @@ namespace Aurora.Services.DataService
                 "osgroup.GroupID"
             };
 
-            List<string> Membership = data.InnerJoin(fields, tables, filter, null, null, null);
+            List<string> Membership = data.Select(fields, "osgroupmembership", join, filter, null, null, null);
             /*
             QueryTables tables = new QueryTables();
             tables.AddTable("osgroup", "osg");

@@ -428,7 +428,7 @@ namespace Aurora.DataManager.SQLite
         /// <param name="start"></param>
         /// <param name="count"></param>
         /// <returns></returns>
-        public override List<string> InnerJoin(string[] wantedValue, Dictionary<string[], string[][]> tables, QueryFilter queryFilter, Dictionary<string, bool> sort, uint? start, uint? count)
+        public override List<string> Select(string[] wantedValue, string table, List<KeyValuePair<KeyValuePair<string, JoinType>, List<KeyValuePair<string, string>>>> join, QueryFilter queryFilter, Dictionary<string, bool> sort, uint? start, uint? count)
         {
             return new List<string>(0);
         }
