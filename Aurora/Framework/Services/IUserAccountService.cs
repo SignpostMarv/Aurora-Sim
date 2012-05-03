@@ -341,7 +341,12 @@ namespace OpenSim.Services.Interfaces
     public interface IUserAccountData : IAuroraDataPlugin
     {
         string Realm { get; }
-        UserAccount[] Get(string[] fields, string[] values);
+        /// <summary>
+        /// returns a list of user account objects matching the values dictionary (which is generally passed onto QueryFilter)
+        /// </summary>
+        /// <param name="values"></param>
+        /// <returns></returns>
+        List<UserAccount> Get(Dictionary<string, string> values);
         bool Store(UserAccount data);
         bool DeleteAccount(UUID userID, bool archiveInformation);
         UserAccount[] GetUsers(UUID scopeID, string query);

@@ -69,13 +69,13 @@ namespace Aurora.Services.DataService
             get { return "IUserAccountData"; }
         }
 
-        public UserAccount[] Get(string[] fields, string[] values)
+        public List<UserAccount> Get(Dictionary<string, string> values)
         {
-            Dictionary<string, object> where = new Dictionary<string, object>(values.Length);
+            Dictionary<string, object> where = new Dictionary<string, object>(values.Count);
 
-            for (uint i = 0; i < values.Length; ++i)
+            foreach(KeyValuePair<string, string> kvp in values)
             {
-                where[fields[i]] = values[i];
+                where[kvp.Key] = kvp.Value;
             }
 
             List<string> query = GD.Query(new string[1] { "*" }, m_realm, new QueryFilter
@@ -85,9 +85,7 @@ namespace Aurora.Services.DataService
 
             List<UserAccount> list = new List<UserAccount>();
 
-            ParseQuery(query, ref list);
-
-            return list.ToArray();
+            return ParseQuery(query);
         }
 
         public bool Store(UserAccount data)
@@ -200,9 +198,7 @@ namespace Aurora.Services.DataService
                 "IFNULL(Name, " + GD.ConCat(new[] {"FirstName", "' '", "LastName"}) + ") as Name"
             }, m_realm, filter, sort, start, count);
 
-            ParseQuery(retVal, ref data);
-
-            return data.ToArray();
+            return ParseQuery(retVal).ToArray();
         }
 
         public uint NumberOfUsers(UUID scopeID, string query)
@@ -216,12 +212,16 @@ namespace Aurora.Services.DataService
         {
         }
 
-        private void ParseQuery(List<string> query, ref List<UserAccount> list)
+        private List<UserAccount> ParseQuery(List<string> query)
         {
+            List<UserAccount> resp = new List<UserAccount>();
+
             for (int i = 0; i < query.Count; i += 11)
             {
-                UserAccount data = new UserAccount
-                                       {PrincipalID = UUID.Parse(query[i + 0]), ScopeID = UUID.Parse(query[i + 1])};
+                UserAccount data = new UserAccount{
+                    PrincipalID = UUID.Parse(query[i + 0]),
+                    ScopeID = UUID.Parse(query[i + 1])
+                };
 
                 //We keep these even though we don't always use them because we might need to create the "Name" from them
                 string FirstName = query[i + 2];
@@ -253,12 +253,14 @@ namespace Aurora.Services.DataService
                 data.Name = query[i + 10];
                 if (string.IsNullOrEmpty(data.Name))
                 {
-                    data.Name = FirstName + " " + LastName;
+                    data.Name = (FirstName + " " + LastName).Trim();
                     //Save the change!
                     Store(data);
                 }
-                list.Add(data);
+                resp.Add(data);
             }
+
+            return resp;
         }
     }
 }
