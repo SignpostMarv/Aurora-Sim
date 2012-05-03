@@ -176,10 +176,7 @@ namespace OpenSim.Services.UserAccountService
 
             if (d.Count < 1)
             {
-                int flsplit = name.LastIndexOf(' ');
-                string first = flsplit > -1 ? name.Substring(0, flsplit) : "";
-                string last = flsplit > -1 ? name.Substring(flsplit + 1) : "";
-                return GetUserAccount(scopeID, first, last);
+                return null;
             }
 
             CacheAccount(d[0]);

@@ -71,17 +71,14 @@ namespace Aurora.Services.DataService
 
         public List<UserAccount> Get(Dictionary<string, string> values)
         {
-            Dictionary<string, object> where = new Dictionary<string, object>(values.Count);
+            QueryFilter filter = new QueryFilter();
 
             foreach(KeyValuePair<string, string> kvp in values)
             {
-                where[kvp.Key] = kvp.Value;
+                filter.andFilters[kvp.Key] = kvp.Value;
             }
 
-            List<string> query = GD.Query(new string[1] { "*" }, m_realm, new QueryFilter
-            {
-                andFilters = where
-            }, null, null, null);
+            List<string> query = GD.Query(new string[1] { "*" }, m_realm, filter, null, null, null);
 
             List<UserAccount> list = new List<UserAccount>();
 
