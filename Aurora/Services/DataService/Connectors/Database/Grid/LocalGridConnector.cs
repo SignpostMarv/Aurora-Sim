@@ -414,7 +414,18 @@ namespace Aurora.Services.DataService
         {
             if (region.EstateOwner == UUID.Zero)
             {
-                MainConsole.Instance.Error("[LocalGridConnector] Attempt to store region with owner of UUID.Zero detected:" + (new System.Diagnostics.StackTrace()).GetFrame(1).ToString());
+                IEstateConnector EstateConnector = Aurora.DataManager.DataManager.RequestPlugin<IEstateConnector>();
+                EstateSettings ES = null;
+                if (EstateConnector != null)
+                {
+                    ES = EstateConnector.GetEstateSettings(region.RegionID);
+                    if (ES != null)
+                        region.EstateOwner = ES.EstateOwner;
+                }
+                if (region.EstateOwner == UUID.Zero && ES != null && ES.EstateID != 0)
+                {
+                    MainConsole.Instance.Error("[LocalGridConnector] Attempt to store region with owner of UUID.Zero detected:" + (new System.Diagnostics.StackTrace()).GetFrame(1).ToString());
+                }
             }
 
             Dictionary<string, object> row = new Dictionary<string, object>(14);
